@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>La Mia App</title>
+    <script>
+        // 1. INCOLLA QUESTO IN <HEAD> DI INDEX.HTML
+        if (!localStorage.getItem('user_web_id')) window.location.replace('login.html');
+    </script>
+    <style>
+        body { background: #0a0a0a; color: #e0e0e0; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        b { color: #4a9eff; }
+    </style>
+</head>
+<body>
+    <h1>Area Riservata</h1>
+    <p>User Web ID: <b id="uid"></b></p>
+    
+    <button onclick="localStorage.removeItem('user_web_id'); location.reload()">Logout</button>
+
+    <script>
+        // 2. RECUPERA L'ID DOVE TI SERVE
+        document.getElementById("uid").innerText = localStorage.getItem('user_web_id');
+    </script>
+</body>
+</html>

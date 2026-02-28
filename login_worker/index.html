@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Area Riservata - Dashboard</title>
+    <script>
+        if (!localStorage.getItem('user_web_id')) window.location.replace('login.html');
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 20px; background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a; }
+        .header h1 { margin: 0; color: #4a9eff; }
+        .user-info { text-align: right; }
+        .user-info b { color: #4a9eff; }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-logout { background: #ff5555; color: white; }
+        .btn-logout:hover { background: #cc4444; }
+        .btn-primary { background: #4a9eff; color: white; }
+        .btn-primary:hover { background: #357abd; }
+        .btn-secondary { background: #333; color: white; }
+        .btn-secondary:hover { background: #444; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: #1a1a1a; padding: 20px; border-radius: 8px; border: 1px solid #2a2a2a; }
+        .card h3 { margin-top: 0; color: #4a9eff; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        .stat { font-size: 2em; font-weight: bold; color: #4a9eff; }
+        .stat-label { color: #888; font-size: 0.9em; margin-top: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #2a2a2a; }
+        th { color: #888; font-weight: normal; font-size: 0.9em; }
+        td { font-size: 0.9em; }
+        tr:hover { background: #1a1a1a; }
+        
+        .badge { padding: 3px 8px; border-radius: 3px; font-size: 0.8em; }
+        .badge-login { background: #2d5016; color: #8bc34a; }
+        .badge-signup { background: #0d476f; color: #4fc3f7; }
+        
+        .flag { font-size: 1.2em; margin-right: 5px; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 4px; cursor: pointer; color: #888; }
+        .tab.active { background: #4a9eff; color: white; border-color: #4a9eff; }
+        
+        .panel { display: none; }
+        .panel.active { display: block; }
+        
+        .loading { text-align: center; padding: 40px; color: #888; }
+        .error { color: #ff5555; padding: 15px; background: #1a0a0a; border-radius: 4px; margin: 15px 0; }
+        
+        .my-logins { max-height: 300px; overflow-y: auto; }
+        
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; gap: 15px; }
+            .user-info { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🔐 Dashboard Accessi</h1>
+                <p style="color: #888; margin: 5px 0 0 0;">Monitoraggio autenticazioni</p>
+            </div>
+            <div class="user-info">
+                <p>Loggato come: <b id="userEmail">-</b></p>
+                <button class="btn btn-logout" onclick="doLogout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('overview')">Panoramica</div>
+            <div class="tab" onclick="switchTab('mylogins')">I Miei Accessi</div>
+            <div class="tab" onclick="switchTab('alllogs')">Tutti i Log</div>
+        </div>
+        
+        <!-- Panoramica -->
+        <div id="overview" class="panel active">
+            <div class="dashboard">
+                <div class="card">
+                    <h3>📊 Totale Accessi</h3>
+                    <div class="stat" id="totalLogins">-</div>
+                    <div class="stat-label">Accessi registrati</div>
+                </div>
+                <div class="card">
+                    <h3>👥 Utenti Unici</h3>
+                    <div class="stat" id="uniqueUsers">-</div>
+                    <div class="stat-label">Email diverse</div>
+                </div>
+                <div class="card">
+                    <h3>🌍 Paesi</h3>
+                    <div class="stat" id="totalCountries">-</div>
+                    <div class="stat-label">Paesi rilevati</div>
+                </div>
+                <div class="card">
+                    <h3>📈 Ultimo Accesso</h3>
+                    <div class="stat" id="lastAccessTime" style="font-size: 1.2em;">-</div>
+                    <div class="stat-label">Quando</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>🕐 Ultimi 10 Accessi</h3>
+                <div id="recentLogins" class="loading">Caricamento...</div>
+            </div>
+        </div>
+        
+        <!-- I Miei Accessi -->
+        <div id="mylogins" class="panel">
+            <div class="card">
+                <h3>📋 Cronologia Accessi Personali</h3>
+                <button class="btn btn-secondary" onclick="loadMyLogins()" style="margin-bottom: 15px;">🔄 Aggiorna</button>
+                <div id="myLoginsList" class="loading">Caricamento...</div>
+            </div>
+        </div>
+        
+        <!-- Tutti i Log -->
+        <div id="alllogs" class="panel">
+            <div class="card">
+                <h3>📜 Tutti i Log di Accesso</h3>
+                <button class="btn btn-secondary" onclick="loadAllLogs()" style="margin-bottom: 15px;">🔄 Aggiorna</button>
+                <div id="allLogsList" class="loading">Caricamento...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WORKER_URL = 'https://login-service.tuo-subdomain.workers.dev';
+        const currentUser = localStorage.getItem('user_web_id');
+        document.getElementById('userEmail').innerText = currentUser;
+        
+        function doLogout() {
+            localStorage.removeItem('user_web_id');
+            localStorage.removeItem('auth_token');
+            window.location.replace('login.html');
+        }
+        
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'overview') loadOverview();
+            if (tabId === 'mylogins') loadMyLogins();
+            if (tabId === 'alllogs') loadAllLogs();
+        }
+        
+        async function loadOverview() {
+            try {
+                const response = await fetch(WORKER_URL + '/api/logs');
+                const data = await response.json();
+                
+                if (data.logs) {
+                    const logs = data.logs;
+                    
+                    // Statistiche
+                    document.getElementById('totalLogins').innerText = logs.length;
+                    
+                    const uniqueEmails = new Set(logs.map(l => l.email));
+                    document.getElementById('uniqueUsers').innerText = uniqueEmails.size;
+                    
+                    const countries = new Set(logs.map(l => l.country));
+                    document.getElementById('totalCountries').innerText = countries.size;
+                    
+                    if (logs.length > 0) {
+                        const last = new Date(logs[0].timestamp);
+                        document.getElementById('lastAccessTime').innerText = last.toLocaleString('it-IT');
+                    }
+                    
+                    // Tabella ultimi accessi
+                    renderRecentLogins(logs.slice(0, 10));
+                }
+            } catch (e) {
+                document.getElementById('recentLogins').innerHTML = 
+                    '<div class="error">Errore nel caricamento: ' + e.message + '</div>';
+            }
+        }
+        
+        function renderRecentLogins(logs) {
+            if (logs.length === 0) {
+                document.getElementById('recentLogins').innerHTML = '<p style="color:#888;">Nessun accesso registrato</p>';
+                return;
+            }
+            
+            const countryFlags = {
+                'IT': '🇮🇹', 'US': '🇺🇸', 'GB': '🇬🇧', 'DE': '🇩🇪', 'FR': '🇫🇷',
+                'ES': '🇪🇸', 'CA': '🇨🇦', 'AU': '🇦🇺', 'JP': '🇯🇵', 'BR': '🇧🇷',
+                'IN': '🇮🇳', 'CN': '🇨🇳', 'RU': '🇷🇺', 'MX': '🇲🇽', 'AR': '🇦🇷',
+                'UNKNOWN': '🌐'
+            };
+            
+            let html = '<table><thead><tr><th>Data/Ora</th><th>Email</th><th>Tipo</th><th>Paese</th><th>IP</th></tr></thead><tbody>';
+            
+            logs.forEach(log => {
+                const date = new Date(log.timestamp).toLocaleString('it-IT');
+                const flag = countryFlags[log.country] || countryFlags['UNKNOWN'];
+                const badgeClass = log.action === 'login' ? 'badge-login' : 'badge-signup';
+                const actionLabel = log.action === 'login' ? 'Login' : 'Registrazione';
+                
+                html += `<tr>
+                    <td>${date}</td>
+                    <td>${log.email}</td>
+                    <td><span class="badge ${badgeClass}">${actionLabel}</span></td>
+                    <td><span class="flag">${flag}</span> ${log.country}</td>
+                    <td style="font-family:monospace;">${log.ip}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('recentLogins').innerHTML = html;
+        }
+        
+        async function loadMyLogins() {
+            try {
+                const response = await fetch(WORKER_URL + '/api/logs');
+                const data = await response.json();
+                
+                if (data.logs) {
+                    const myLogs = data.logs.filter(l => l.email === currentUser);
+                    
+                    if (myLogs.length === 0) {
+                        document.getElementById('myLoginsList').innerHTML = 
+                            '<p style="color:#888;">Nessun accesso registrato per il tuo account</p>';
+                        return;
+                    }
+                    
+                    const countryFlags = {
+                        'IT': '🇮🇹', 'US': '🇺🇸', 'GB': '🇬🇧', 'DE': '🇩🇪', 'FR': '🇫🇷',
+                        'ES': '🇪🇸', 'CA': '🇨🇦', 'AU': '🇦🇺', 'JP': '🇯🇵', 'BR': '🇧🇷',
+                        'UNKNOWN': '🌐'
+                    };
+                    
+                    let html = '<div class="my-logins"><table><thead><tr><th>Data/Ora</th><th>Tipo</th><th>Paese</th><th>IP</th></tr></thead><tbody>';
+                    
+                    myLogs.forEach(log => {
+                        const date = new Date(log.timestamp).toLocaleString('it-IT');
+                        const flag = countryFlags[log.country] || countryFlags['UNKNOWN'];
+                        const badgeClass = log.action === 'login' ? 'badge-login' : 'badge-signup';
+                        const actionLabel = log.action === 'login' ? 'Login' : 'Registrazione';
+                        
+                        html += `<tr>
+                            <td>${date}</td>
+                            <td><span class="badge ${badgeClass}">${actionLabel}</span></td>
+                            <td><span class="flag">${flag}</span> ${log.country}</td>
+                            <td style="font-family:monospace;">${log.ip}</td>
+                        </tr>`;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    document.getElementById('myLoginsList').innerHTML = html;
+                }
+            } catch (e) {
+                document.getElementById('myLoginsList').innerHTML = 
+                    '<div class="error">Errore nel caricamento: ' + e.message + '</div>';
+            }
+        }
+        
+        async function loadAllLogs() {
+            try {
+                const response = await fetch(WORKER_URL + '/api/logs');
+                const data = await response.json();
+                
+                if (data.logs) {
+                    const logs = data.logs;
+                    
+                    if (logs.length === 0) {
+                        document.getElementById('allLogsList').innerHTML = 
+                            '<p style="color:#888;">Nessun accesso registrato</p>';
+                        return;
+                    }
+                    
+                    const countryFlags = {
+                        'IT': '🇮🇹', 'US': '🇺🇸', 'GB': '🇬🇧', 'DE': '🇩🇪', 'FR': '🇫🇷',
+                        'ES': '🇪🇸', 'CA': '🇨🇦', 'AU': '🇦🇺', 'JP': '🇯🇵', 'BR': '🇧🇷',
+                        'UNKNOWN': '🌐'
+                    };
+                    
+                    let html = '<div style="max-height:500px;overflow-y:auto;"><table><thead><tr><th>Data/Ora</th><th>Email</th><th>Tipo</th><th>Paese</th><th>IP</th></tr></thead><tbody>';
+                    
+                    logs.forEach(log => {
+                        const date = new Date(log.timestamp).toLocaleString('it-IT');
+                        const flag = countryFlags[log.country] || countryFlags['UNKNOWN'];
+                        const badgeClass = log.action === 'login' ? 'badge-login' : 'badge-signup';
+                        const actionLabel = log.action === 'login' ? 'Login' : 'Registrazione';
+                        
+                        html += `<tr>
+                            <td>${date}</td>
+                            <td>${log.email}</td>
+                            <td><span class="badge ${badgeClass}">${actionLabel}</span></td>
+                            <td><span class="flag">${flag}</span> ${log.country}</td>
+                            <td style="font-family:monospace;">${log.ip}</td>
+                        </tr>`;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    document.getElementById('allLogsList').innerHTML = html;
+                }
+            } catch (e) {
+                document.getElementById('allLogsList').innerHTML = 
+                    '<div class="error">Errore nel caricamento: ' + e.message + '</div>';
+            }
+        }
+        
+        // Carica panoramica all'avvio
+        loadOverview();
+    </script>
+</body>
+</html>

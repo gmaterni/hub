@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { background: #0a0a0a; color: #e0e0e0; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1a1a1a; padding: 30px; border-radius: 8px; border: 1px solid #2a2a2a; width: 300px; text-align: center; }
+        .f-group { position: relative; width: 100%; }
+        input { width: 100%; padding: 10px; margin: 10px 0; background: #0a0a0a; border: 1px solid #333; color: white; box-sizing: border-box; padding-right: 40px; }
+        button { width: 100%; padding: 10px; background: #4a9eff; border: none; color: white; cursor: pointer; margin-top: 10px; }
+        .toggle { margin-top: 15px; font-size: 0.8em; color: #888; cursor: pointer; }
+        .eye { position: absolute; right: 10px; top: 18px; cursor: pointer; color: #666; font-size: 0.8em; user-select: none; }
+        span { color: #4a9eff; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 id="t">Login</h2>
+        <div class="f-group"><input type="text" id="u" placeholder="User" autocomplete="off"></div>
+        <div class="f-group">
+            <input type="password" id="p" placeholder="Pass" autocomplete="new-password">
+            <div class="eye" onclick="v('p')">👁️</div>
+        </div>
+        <div id="s" style="display:none" class="f-group">
+            <input type="password" id="p2" placeholder="Conferma" autocomplete="new-password">
+            <div class="eye" onclick="v('p2')">👁️</div>
+        </div>
+        <button id="b">Accedi</button>
+        <div class="toggle" id="x">Non hai un account? <span>Registrati</span></div>
+    </div>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        let mode = false;
+        // Funzione visualizza password
+        function v(id) {
+            const i = document.getElementById(id);
+            i.type = i.type === "password" ? "text" : "password";
+        }
+        const x = document.getElementById('x');
+        x.onclick = () => {
+            mode = !mode;
+            document.getElementById('t').innerText = mode ? "Registrazione" : "Login";
+            document.getElementById('b').innerText = mode ? "Registrati" : "Accedi";
+            document.getElementById('s').style.display = mode ? "block" : "none";
+            x.innerHTML = mode ? "Annulla? <span>Torna al Login</span>" : "Non hai un account? <span>Registrati</span>";
+        };
+        document.getElementById('b').onclick = () => {
+            const user = document.getElementById('u').value, pass = document.getElementById('p').value;
+            if (!user || !pass) return;
+            let ok = mode ? (pass === document.getElementById('p2').value && Auth.signup(user, pass)) : Auth.login(user, pass);
+            if (ok) { Auth.kill(); window.location.replace('app.html'); }
+            else alert("Errore");
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <script src="config.js"></script>
+    <script>
+        if (!localStorage.getItem(CONFIG.KEY_ID)) window.location.replace('login.html');
+    </script>
+    <style>
+        body { background: #0a0a0a; color: #e0e0e0; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        b { color: #4a9eff; }
+    </style>
+</head>
+<body>
+    <h1 id="msg"></h1>
+    <p>ID Utente: <b id="uid"></b></p>
+    <script>
+        const id = localStorage.getItem(CONFIG.KEY_ID);
+        const user = JSON.parse(localStorage.getItem(CONFIG.KEY_USERS))[id];
+        document.getElementById("msg").innerText = "Benvenuto " + user.username;
+        document.getElementById("uid").innerText = id;
+    </script>
+</body>
+</html>

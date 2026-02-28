@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite 1 - Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --danger: #ef4444;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid var(--accent); /* Bordo colorato */
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin: 1.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        b#uid {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--text-primary);
+            word-break: break-all;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem;
+            border-radius: 0.4rem;
+        }
+
+        button {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 0.6rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+    </style>
+    <script>
+        // 1. Legge ID dall'URL e pulisce l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('user_web_id');
+        
+        if (id) {
+            localStorage.setItem('user_web_id', id);
+            // Pulisce l'URL senza ricaricare la pagina
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+
+        // 2. Controllo: se non abbiamo l'ID nel localStorage, andiamo all'Hub
+        if (!localStorage.getItem('user_web_id')) {
+            window.location.replace('https://gmaterni.github.io/hub/hub.html?redirect=' + encodeURIComponent(location.href));
+        }
+
+        function logout() {
+            localStorage.removeItem('user_web_id');
+            // Ricaricando, il controllo sopra scatterà e manderà all'Hub
+            location.reload();
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Satellite 1</h1>
+        <p>Benvenuto, sei loggato come:
+            <b id="uid">...</b>
+        </p>
+        <button onclick="logout()">LOGOUT</button>
+    </div>
+
+    <script>
+        document.getElementById("uid").innerText = localStorage.getItem('user_web_id') || 'Ospite';
+    </script>
+</body>
+
+</html>
